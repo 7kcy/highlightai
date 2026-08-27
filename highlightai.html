@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HighlightAI — question left, answer right</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0b;
+    --rail:#0a0a0b;
+    --panel:#0d0e10;
+    --panel-alt:#111214;
+    --border:#232426;
+    --text:#dcdcdd;
+    --muted:#75787a;
+    --green:#3ecf8e;
+    --green-dim:#132a20;
+    --purple:#8a7cff;
+    --red:#ef4770;
+    --amber:#e8a33d;
+  }
+  *{box-sizing:border-box;}
+  *{ transition: background-color .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .12s ease; }
+  input, textarea, select{ transition: background-color .18s ease, color .18s ease, border-color .18s ease; }
+  button:active{ transform:scale(.96); }
+  html,body{height:100%;margin:0;}
+  body.light{
+    --bg:#f4f4f5;
+    --rail:#f4f4f5;
+    --panel:#ffffff;
+    --panel-alt:#eeeeef;
+    --border:#dcdddf;
+    --text:#1c1d1e;
+    --muted:#75787a;
+  }
+  body.light .logo{ color:#111; }
+  body.light .tab-item.active{ color:#111; background:#e2e3e4; }
+  body.light .rail-btn.active{ color:#111; background:#e2e3e4; }
+  body.light .ask-btn, body.light .btn-primary{ background:#1c1d1e; color:#f4f4f5; }
+  body.light #selectAddBtn, body.light #selectAddBtn::after{ background:#1c1d1e; color:#f4f4f5; }
+  body.light .provider-chip{ background:#fff; }
+  body.light .provider-chip.selected{ border-color:#9a9c9e; background:#e9e9ea; }
+  body.light .modal, body.light .modal input, body.light .modal select{ background:#fff; }
+  body.light .modal input, body.light .modal select, body.light .modal textarea{ background:#f6f6f7; }
+  body.light .entry .a{ background:#fff; }
+  body.light .icon-btn:hover{ border-color:#b9babc; }
+  body.light .settings-tabs{ background:#f0f0f1; }
+  body.light .settings-tab.active{ background:#fff; color:#111; }
+  body.light .opt-chip{ background:#fff; }
+  body.light .opt-chip.selected{ background:#e9e9ea; border-color:#9a9c9e; color:#111; }
+  body.light .btn-secondary{ background:#fff; }
+
+  body.font-sm{ --q-font-size:13.5px; --a-font-size:13px; }
+  body.font-md{ --q-font-size:15.5px; --a-font-size:14.5px; }
+  body.font-lg{ --q-font-size:17.5px; --a-font-size:16.5px; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    overflow:hidden;
+  }
+  svg{ display:block; }
+  button{ font-family:inherit; }
+
+  /* ---------------- top bar ---------------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:0 16px;
+    height:52px;
+    flex:none;
+    border-bottom:1px solid var(--border);
+  }
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+    font-size:14.5px;
+    color:#fff;
+    margin-right:8px;
+    white-space:nowrap;
+  }
+  .logo .mark{
+    width:22px;height:22px;
+    border-radius:5px;
+    background:#7dd3fc;
+    color:#0a0a0b;
+    display:flex;align-items:center;justify-content:center;
+    flex:none;
+  }
+  .pill{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    border:none;
+    border-radius:7px;
+    padding:8px 13px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .pill-ai{ background:var(--green-dim); color:var(--green); }
+  .pill-ai:hover{ background:#173a2b; }
+  .pill-ai .dot{ width:6px;height:6px;border-radius:50%; background:#2b4438; flex:none; }
+  .pill-ai .dot.on{ background:var(--green); box-shadow:0 0 6px var(--green); }
+  .spacer{ flex:1; }
+  .icon-btn{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    border-radius:7px;
+    width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .icon-btn:hover{ border-color:#3a3c3f; color:var(--text); }
+
+  /* ---------------- tab bar ---------------- */
+  .tabbar{
+    display:flex;
+    align-items:center;
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+    flex:none;
+    height:38px;
+    padding:0 4px;
+    position:relative;
+  }
+  .tabs-list{
+    display:flex;
+    align-items:stretch;
+    overflow-x:auto;
+    flex:1;
+    scrollbar-width:thin;
+  }
+  .tab-item{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:0 6px 0 12px;
+    height:38px;
+    border-right:1px solid var(--border);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:var(--muted);
+    cursor:pointer;
+    white-space:nowrap;
+    position:relative;
+    flex:none;
+  }
+  .tab-item .tdot{ width:7px;height:7px;border-radius:2px; background:#464a4d; flex:none; }
+  .tab-item.active{ color:#e9eaea; background:#2a2b2d; }
+  .tab-item.active .tdot{ background:#c9cacb; }
+  .tab-item.dragging{ opacity:.4; }
+  .tab-item.drop-before{ box-shadow:inset 2px 0 0 #c9cacb; }
+  .tab-item.drop-after{ box-shadow:inset -2px 0 0 #c9cacb; }
+  .tab-item .tclose{
+    width:16px;height:16px;
+    border-radius:4px;
+    display:flex;align-items:center;justify-content:center;
+    color:transparent;
+    background:transparent;
+    border:none;
+    flex:none;
+    cursor:pointer;
+  }
+  .tab-item:hover .tclose, .tab-item.active .tclose{ color:var(--muted); }
+  .tab-item .tclose:hover{ background:#26282a; color:var(--text); }
+  .tab-add-btn{
+    flex:none;
+    width:34px;height:38px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--muted);
+    background:transparent;
+    border:none;
+    cursor:pointer;
+  }
+  .tab-add-btn:hover{ color:var(--text); }
+
+  .manage-panel{
+    position:absolute;
+    top:6px; left:48px;
+    width:230px;
+    max-height:60vh;
+    overflow-y:auto;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    border-radius:9px;
+    box-shadow:0 14px 30px rgba(0,0,0,.45);
+    padding:6px;
+    opacity:0;
+    transform:translateX(-6px) scale(.98);
+    pointer-events:none;
+    transition:opacity .16s ease, transform .16s ease, background-color .16s ease, border-color .16s ease;
+    z-index:60;
+  }
+  .manage-panel.open{ opacity:1; transform:translateX(0) scale(1); pointer-events:auto; }
+  .manage-row{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:8px;
+    padding:8px 9px;
+    border-radius:6px;
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .manage-row:hover{ background:#1a1b1d; }
+  .manage-row.active{ background:#202123; color:#fff; }
+  .manage-row .mname{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .manage-row .mactions{ display:flex; gap:2px; flex:none; }
+  .manage-row .mren, .manage-row .mdel{
+    flex:none; width:22px;height:22px;border-radius:5px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--muted); background:transparent; border:none; cursor:pointer;
+  }
+  .manage-row .mren:hover{ background:#2a2b2d; color:var(--text); }
+  .manage-row .mdel:hover{ background:#2a2b2d; color:#f2a3b3; }
+
+  /* ---------------- tab context menu ---------------- */
+  .ctx-menu{
+    position:fixed;
+    z-index:300;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    border-radius:9px;
+    box-shadow:0 14px 28px rgba(0,0,0,.45);
+    padding:6px;
+    min-width:160px;
+    animation:ctxIn .12s ease;
+  }
+  @keyframes ctxIn{
+    from{ opacity:0; transform:translateY(-4px) scale(.97); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+  .ctx-item{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:100%;
+    background:transparent;
+    border:none;
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    cursor:pointer;
+    text-align:left;
+  }
+  .ctx-item:hover{ background:#1c1d1f; }
+  .ctx-item.ctx-danger{ color:#f2a3b3; }
+  .ctx-item.ctx-danger:hover{ background:#2a1418; }
+
+  /* ---------------- inline tab rename ---------------- */
+  .tname-edit{
+    background:#0a0a0b;
+    border:1px solid #4a4b4d;
+    border-radius:4px;
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    padding:1px 5px;
+    width:110px;
+    outline:none;
+  }
+
+  /* ---------------- body ---------------- */
+  .body-row{
+    flex:1;
+    display:flex;
+    min-height:0;
+  }
+  .rail{
+    width:44px;
+    flex:none;
+    background:var(--rail);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:14px 0;
+    gap:6px;
+    position:relative;
+  }
+  .rail-btn{
+    width:32px;height:32px;
+    border-radius:7px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--muted);
+    background:transparent;
+    border:none;
+    cursor:pointer;
+  }
+  .rail-btn:hover{ color:var(--text); background:var(--panel-alt); }
+  .rail-btn.active{ color:#e9eaea; background:#2a2b2d; }
+
+  .workspace{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .panes{
+    flex:1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    min-height:0;
+  }
+  @media (max-width:820px){
+    .panes{ grid-template-columns:1fr; }
+  }
+
+  /* ---------------- left: question ---------------- */
+  .pane{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .pane-left{
+    background:var(--panel);
+    border-right:1px solid var(--border);
+  }
+  #question{
+    flex:1;
+    resize:none;
+    border:none;
+    outline:none;
+    background:transparent;
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:var(--q-font-size, 15.5px);
+    line-height:1.6;
+    padding:20px 22px;
+  }
+  #question::placeholder{ color:#54585b; }
+
+  .ask-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 18px;
+    border-bottom:1px solid var(--border);
+  }
+  .hint{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:#54585b;
+  }
+  .hint kbd{
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:1px 5px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .ask-btn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#e9eaea;
+    color:#0a0a0b;
+    border:none;
+    border-radius:7px;
+    padding:9px 16px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .ask-btn:hover{ filter:brightness(1.08); }
+  .ask-btn:disabled{ opacity:.45; cursor:default; }
+
+  /* ---------------- right: answers ---------------- */
+  .pane-right{
+    background:var(--panel);
+  }
+  #feed{
+    flex:1;
+    overflow-y:auto;
+    padding:18px 20px 30px;
+  }
+  .empty{
+    border:1px dashed #262729;
+    border-radius:10px;
+    padding:26px 20px;
+    color:var(--muted);
+    font-size:13.5px;
+    line-height:1.65;
+    margin-top:4px;
+  }
+  .entry{
+    margin-bottom:22px;
+    animation:in .2s ease;
+  }
+  @keyframes in{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+  .entry .q{
+    display:flex;
+    gap:9px;
+    align-items:flex-start;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:#a9acae;
+    margin-bottom:10px;
+  }
+  .entry .q .tag{
+    flex:none;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    color:var(--purple);
+    border-radius:4px;
+    padding:1px 6px;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.4px;
+  }
+  .entry .a{
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    border-left:2px solid var(--green);
+    border-radius:0 9px 9px 9px;
+    padding:14px 16px;
+    font-size:var(--a-font-size, 14.5px);
+    line-height:1.65;
+    color:var(--text);
+    white-space:pre-wrap;
+  }
+  .entry .a.loading{ color:var(--muted); font-style:italic; }
+  .entry .a.err{ border-left-color:var(--red); color:#f2a3b3; }
+  .entry .via{
+    margin-top:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    color:#54585b;
+  }
+
+  /* ---------------- selection popover ---------------- */
+  #selectPopover{
+    position:fixed;
+    display:none;
+    transform:translate(-50%, -100%);
+    z-index:150;
+  }
+  #selectPopover.show{ display:block; }
+  #selectAddBtn{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    background:#e9eaea;
+    color:#0a0a0b;
+    border:none;
+    border-radius:7px;
+    padding:8px 13px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:12px;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(0,0,0,.35);
+    white-space:nowrap;
+  }
+  #selectAddBtn:hover{ filter:brightness(0.95); }
+  #selectAddBtn::after{
+    content:"";
+    position:absolute;
+    left:50%; bottom:-5px;
+    transform:translateX(-50%) rotate(45deg);
+    width:10px;height:10px;
+    background:#e9eaea;
+  }
+
+  /* ---------------- status bar ---------------- */
+  .statusbar{
+    flex:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 16px;
+    border-top:1px solid var(--border);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    position:relative;
+    gap:14px;
+  }
+  .statusbar .ready{ display:flex; align-items:center; gap:7px; }
+  .statusbar .ready .dot{ width:7px;height:7px;border-radius:50%; background:var(--green); }
+  .statusbar .right-labels{ display:flex; gap:16px; }
+
+  /* ---------------- modal ---------------- */
+  .modal-backdrop{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.6);
+    display:flex;
+    align-items:center; justify-content:center;
+    z-index:200;
+    padding:20px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, background-color .18s ease;
+  }
+  .modal-backdrop.open{ opacity:1; pointer-events:auto; }
+  .modal{
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    width:min(460px,92vw);
+    border-radius:12px;
+    padding:22px 22px 18px;
+    max-height:86vh;
+    display:flex;
+    flex-direction:column;
+    transform:scale(.96) translateY(6px);
+    transition:transform .18s ease, background-color .18s ease, border-color .18s ease;
+  }
+  .modal-backdrop.open .modal{ transform:scale(1) translateY(0); }
+  .modal h3{ font-size:18px; margin:0 0 4px; color:#fff; flex:none; }
+  .modal p.sub{ font-size:12.5px; color:var(--muted); line-height:1.5; margin:0 0 16px; }
+
+  .modal-body{
+    overflow-y:auto;
+    overflow-x:hidden;
+    min-height:0;
+    flex:1;
+    padding-right:10px;
+    margin-right:-10px;
+    scrollbar-width:thin;
+    scrollbar-color:#3a3b3d transparent;
+  }
+  .modal-body::-webkit-scrollbar{ width:7px; }
+  .modal-body::-webkit-scrollbar-track{ background:transparent; }
+  .modal-body::-webkit-scrollbar-thumb{ background:#3a3b3d; border-radius:8px; }
+  .modal-body::-webkit-scrollbar-thumb:hover{ background:#4c4d4f; }
+  body.light .modal-body{ scrollbar-color:#c9c9ca transparent; }
+  body.light .modal-body::-webkit-scrollbar-thumb{ background:#c9c9ca; }
+  body.light .modal-body::-webkit-scrollbar-thumb:hover{ background:#adadae; }
+
+  .modal-actions{ flex:none; padding-top:14px; }
+
+  .provider-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .provider-chip{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    border:1px solid var(--border);
+    background:#0a0a0b;
+    color:var(--text);
+    border-radius:8px;
+    padding:10px 12px;
+    cursor:pointer;
+    font-size:13px;
+    text-align:left;
+  }
+  .provider-chip .sw{
+    width:8px;height:8px;border-radius:50%;
+    background:#3a3c3f;
+    flex:none;
+  }
+  .provider-chip .sw.on{ background:#c9cacb; box-shadow:0 0 5px #c9cacb; }
+  .provider-chip.selected{ border-color:#4a4b4d; background:#2a2b2d; }
+  .provider-chip .pname{ font-weight:600; }
+  .provider-chip .pmodel{ font-size:10.5px; color:var(--muted); font-family:'JetBrains Mono', monospace; }
+
+  .modal label{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    margin-bottom:6px;
+  }
+  .modal a.link{ color:#c9cacb; text-decoration:none; }
+  .modal a.link:hover{ text-decoration:underline; }
+  .modal input, .modal select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:7px;
+    border:1px solid var(--border);
+    background:#0a0a0b;
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    margin-bottom:14px;
+  }
+  .modal select{
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2375787a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    padding-right:34px;
+    cursor:pointer;
+  }
+  .field-hint{
+    font-size:11.5px;
+    color:var(--muted);
+    margin:-10px 0 14px;
+    line-height:1.5;
+  }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; }
+  .modal-divider{ height:1px; background:var(--border); margin:6px 0 16px; }
+  .modal textarea{
+    width:100%;
+    padding:10px 12px;
+    border-radius:7px;
+    border:1px solid var(--border);
+    background:#0a0a0b;
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    margin-bottom:6px;
+    resize:vertical;
+  }
+  .settings-row{ margin-bottom:4px; }
+  .inline-label{
+    display:flex !important;
+    justify-content:space-between;
+    margin-bottom:8px !important;
+  }
+  .inline-label span{ color:var(--text); font-family:'JetBrains Mono', monospace; }
+  .modal input[type="range"]{
+    width:100%;
+    margin-bottom:14px;
+    accent-color:#c9cacb;
+    padding:0;
+    background:transparent;
+    border:none;
+  }
+  .btn-danger{
+    width:100%;
+    background:transparent;
+    border:1px solid #4a2b33;
+    color:#e08a9a;
+    padding:9px 14px;
+    border-radius:7px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    cursor:pointer;
+    margin:6px 0 18px;
+  }
+  .btn-danger:hover{ background:#2a1418; border-color:#6b3a45; }
+
+  .modal-wide{ width:min(500px,92vw); }
+  .settings-tabs{
+    display:flex;
+    gap:4px;
+    background:#0a0a0b;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:3px;
+    margin-bottom:18px;
+  }
+  .settings-tab{
+    flex:1;
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    padding:7px 8px;
+    border-radius:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    cursor:pointer;
+  }
+  .settings-tab:hover{ color:var(--text); }
+  .settings-tab.active{ background:#2a2b2d; color:#e9eaea; }
+  .settings-section label{ margin-top:2px; }
+  .settings-section > label:first-of-type{ margin-top:0; }
+
+  .chip-row{ display:flex; gap:8px; margin-bottom:6px; }
+  .opt-chip{
+    flex:1;
+    background:#0a0a0b;
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:9px 10px;
+    border-radius:7px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    cursor:pointer;
+    text-align:center;
+  }
+  .opt-chip:hover{ color:var(--text); }
+  .opt-chip.selected{ border-color:#8a8c8e; background:#2a2b2d; color:#e9eaea; }
+
+  .btn-secondary{
+    width:100%;
+    background:#0a0a0b;
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 14px;
+    border-radius:7px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    cursor:pointer;
+    margin:6px 0 14px;
+  }
+  .btn-secondary:hover{ border-color:#5a5b5d; }
+  .modal-actions button{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    padding:9px 15px;
+    border-radius:7px;
+    border:none;
+    cursor:pointer;
+  }
+  .btn-ghost{ background:transparent; color:var(--muted); }
+  .btn-primary{ background:#e9eaea; color:#0a0a0b; font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <span class="mark">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 6 3 12l6 6"/>
+        <path d="M15 6l6 6-6 6"/>
+      </svg>
+    </span>
+    HighlightAI
+  </div>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="themeBtn" title="Toggle light / dark">
+    <svg id="sunIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.9 4.9l1.4 1.4"/><path d="M17.7 17.7l1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.9 19.1l1.4-1.4"/><path d="M17.7 6.3l1.4-1.4"/></svg>
+    <svg id="moonIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+  </button>
+  <button class="icon-btn" id="settingsBtn" title="Model & key settings">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"/></svg>
+  </button>
+</div>
+
+<div class="tabbar">
+  <div class="tabs-list" id="tabsList"></div>
+  <button class="tab-add-btn" id="tabAddBtn" title="New chat">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+  </button>
+</div>
+
+<div class="body-row">
+  <div class="rail">
+    <button class="rail-btn" id="manageBtn" title="Manage chats">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    </button>
+    <div class="manage-panel" id="managePanel"></div>
+    <button class="rail-btn active" title="Ask">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <button class="rail-btn" id="aiBtn" title="AI settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="8" width="16" height="12" rx="2.5"/>
+        <path d="M12 8V4"/>
+        <circle cx="12" cy="3" r="1.3" fill="currentColor" stroke="none"/>
+        <circle cx="9" cy="13.5" r="1.3" fill="currentColor" stroke="none"/>
+        <circle cx="15" cy="13.5" r="1.3" fill="currentColor" stroke="none"/>
+        <path d="M9 17.5h6"/>
+        <path d="M2 12h2"/>
+        <path d="M20 12h2"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="workspace">
+    <div class="panes">
+      <div class="pane pane-left">
+        <textarea id="question" placeholder="Ask anything. Press Enter to send, Shift+Enter for a new line."></textarea>
+        <div class="ask-row">
+          <span class="hint"><kbd>Enter</kbd> to send</span>
+          <button class="ask-btn" id="askBtn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 5l7 7-7 7"/></svg>
+            Ask
+          </button>
+        </div>
+      </div>
+
+      <div class="pane pane-right">
+        <div id="feed">
+          <div class="empty" id="emptyState">Nothing yet. Type a question on the left and send it — the answer shows up here.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <div class="ready"><span class="dot" id="readyDot"></span><span id="readyLabel">Ready</span></div>
+      <div class="right-labels">
+        <span id="statusKey">Groq: not connected</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="aiModalBackdrop">
+  <div class="modal">
+    <h3>AI provider</h3>
+    <div class="modal-body">
+      <p class="sub">Pick a provider, then paste a key for it. Keys are stored only in your browser — never sent anywhere except that provider's API.</p>
+      <div class="provider-grid" id="providerGrid"></div>
+
+      <label for="apiKeyInput">API key</label>
+      <input type="password" id="apiKeyInput" placeholder="">
+      <div class="field-hint">Don't have one? <a class="link" id="signupLink" href="#" target="_blank" rel="noopener">Get a free key</a> · pasting a key auto-detects its provider.</div>
+
+      <label for="modelInput">Model</label>
+      <select id="modelInput"></select>
+      <div class="field-hint">Auto-picked for your provider — change it only if you want a different model.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="aiCancel">cancel</button>
+      <button class="btn-primary" id="aiSave">save & use</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="settingsModalBackdrop">
+  <div class="modal modal-wide">
+    <h3>Settings</h3>
+
+    <div class="settings-tabs" id="settingsTabs">
+      <button class="settings-tab active" data-section="behavior">Behavior</button>
+      <button class="settings-tab" data-section="appearance">Appearance</button>
+      <button class="settings-tab" data-section="data">Data</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="settings-section" id="section-behavior">
+        <div class="settings-row">
+          <label for="tempInput" class="inline-label">Temperature <span id="tempValue">0.5</span></label>
+          <input type="range" id="tempInput" min="0" max="1" step="0.1" value="0.5">
+        </div>
+        <div class="field-hint">Lower is more focused and predictable, higher is more varied and creative.</div>
+
+        <div class="settings-row">
+          <label for="maxTokensInput" class="inline-label">Max response length <span id="maxTokensValue">1024</span> tokens</label>
+          <input type="range" id="maxTokensInput" min="256" max="4096" step="256" value="1024">
+        </div>
+        <div class="field-hint">Caps how long a single answer can get. Lower is faster and cheaper.</div>
+
+        <div class="settings-row">
+          <label for="historyLimitInput" class="inline-label">Context window <span id="historyLimitValue">20</span> messages</label>
+          <input type="range" id="historyLimitInput" min="2" max="40" step="2" value="20">
+        </div>
+        <div class="field-hint">Only the most recent messages in a chat are sent as context — keeps long chats fast and affordable.</div>
+
+        <label for="systemPromptInput">Custom system prompt (optional)</label>
+        <textarea id="systemPromptInput" rows="3" placeholder="Leave blank to use the default: be helpful and direct."></textarea>
+        <div class="field-hint">Applies to every chat, across all providers.</div>
+      </div>
+
+      <div class="settings-section" id="section-appearance" hidden>
+        <label>Theme</label>
+        <div class="chip-row" id="themeRow">
+          <button type="button" class="opt-chip" data-theme="dark">Dark</button>
+          <button type="button" class="opt-chip" data-theme="light">Light</button>
+        </div>
+
+        <label>Text size</label>
+        <div class="chip-row" id="fontSizeRow">
+          <button type="button" class="opt-chip" data-size="sm">Small</button>
+          <button type="button" class="opt-chip" data-size="md">Medium</button>
+          <button type="button" class="opt-chip" data-size="lg">Large</button>
+        </div>
+        <div class="field-hint">Changes the size of your questions and the AI's answers.</div>
+      </div>
+
+      <div class="settings-section" id="section-data" hidden>
+        <label>Export</label>
+        <button class="btn-secondary" id="exportBtn" type="button">Download all chats as JSON</button>
+        <div class="field-hint">Saves every chat tab's questions and answers to a file on your device.</div>
+
+        <label>Danger zone</label>
+        <button class="btn-secondary" id="clearAllBtn" type="button">Clear all chats</button>
+        <div class="field-hint">Empties every chat's messages but keeps your tabs, keys, and settings.</div>
+        <button class="btn-danger" id="resetAllBtn" type="button">Reset everything</button>
+        <div class="field-hint">Wipes saved keys, models, chats, and settings on this device. Cannot be undone.</div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" id="settingsCancel">cancel</button>
+      <button class="btn-primary" id="settingsSave">save</button>
+    </div>
+  </div>
+</div>
+
+<div id="selectPopover">
+  <button id="selectAddBtn">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+    Add to question
+  </button>
+</div>
+
+<script>
+/* ---------- providers ---------- */
+const PROVIDERS = {
+  groq: {
+    label: 'Groq',
+    defaultModel: 'llama-3.3-70b-versatile',
+    signupUrl: 'https://console.groq.com/keys',
+    keyPlaceholder: 'gsk_...',
+    models: [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+      'mixtral-8x7b-32768',
+      'gemma2-9b-it'
+    ]
+  },
+  openai: {
+    label: 'OpenAI',
+    defaultModel: 'gpt-4o-mini',
+    signupUrl: 'https://platform.openai.com/api-keys',
+    keyPlaceholder: 'sk-...',
+    models: [
+      'gpt-4o-mini',
+      'gpt-4o',
+      'gpt-4.1',
+      'gpt-4.1-mini',
+      'o3-mini'
+    ]
+  },
+  anthropic: {
+    label: 'Claude',
+    defaultModel: 'claude-sonnet-5',
+    signupUrl: 'https://console.anthropic.com/settings/keys',
+    keyPlaceholder: 'sk-ant-...',
+    models: [
+      'claude-sonnet-5',
+      'claude-opus-4-8',
+      'claude-haiku-4-5-20251001',
+      'claude-fable-5'
+    ]
+  },
+  google: {
+    label: 'Gemini',
+    defaultModel: 'gemini-2.5-flash',
+    signupUrl: 'https://aistudio.google.com/apikey',
+    keyPlaceholder: 'AIza...',
+    models: [
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash'
+    ]
+  }
+};
+
+function loadProviderData(id){
+  try{
+    const raw = localStorage.getItem('provider_' + id);
+    return raw ? JSON.parse(raw) : { key:'', model: PROVIDERS[id].defaultModel };
+  }catch(e){
+    return { key:'', model: PROVIDERS[id].defaultModel };
+  }
+}
+function saveProviderData(id, data){
+  localStorage.setItem('provider_' + id, JSON.stringify(data));
+}
+function getSelectedProvider(){
+  return localStorage.getItem('selected_provider') || 'groq';
+}
+function setSelectedProvider(id){
+  localStorage.setItem('selected_provider', id);
+}
+
+let modalSelected = getSelectedProvider();
+
+/* ---------- elements ---------- */
+const questionEl = document.getElementById('question');
+const askBtn = document.getElementById('askBtn');
+const feed = document.getElementById('feed');
+const emptyState = document.getElementById('emptyState');
+const statusKey = document.getElementById('statusKey');
+const readyLabel = document.getElementById('readyLabel');
+const readyDot = document.getElementById('readyDot');
+const aiModalBackdrop = document.getElementById('aiModalBackdrop');
+const settingsModalBackdrop = document.getElementById('settingsModalBackdrop');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const modelInput = document.getElementById('modelInput');
+const signupLink = document.getElementById('signupLink');
+const tempInput = document.getElementById('tempInput');
+const tempValue = document.getElementById('tempValue');
+const systemPromptInput = document.getElementById('systemPromptInput');
+const resetAllBtn = document.getElementById('resetAllBtn');
+const providerGrid = document.getElementById('providerGrid');
+const tabsList = document.getElementById('tabsList');
+const tabAddBtn = document.getElementById('tabAddBtn');
+const manageBtn = document.getElementById('manageBtn');
+const managePanel = document.getElementById('managePanel');
+const themeBtn = document.getElementById('themeBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const aiBtn = document.getElementById('aiBtn');
+const sunIcon = document.getElementById('sunIcon');
+const moonIcon = document.getElementById('moonIcon');
+const settingsTabs = document.querySelectorAll('.settings-tab');
+const settingsSections = {
+  behavior: document.getElementById('section-behavior'),
+  appearance: document.getElementById('section-appearance'),
+  data: document.getElementById('section-data')
+};
+const maxTokensInput = document.getElementById('maxTokensInput');
+const maxTokensValue = document.getElementById('maxTokensValue');
+const historyLimitInput = document.getElementById('historyLimitInput');
+const historyLimitValue = document.getElementById('historyLimitValue');
+const themeRow = document.getElementById('themeRow');
+const fontSizeRow = document.getElementById('fontSizeRow');
+const exportBtn = document.getElementById('exportBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+
+/* ---------- conversations / tabs ---------- */
+let conversations = [];
+let activeId = null;
+
+function makeConversation(name){
+  return {
+    id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name,
+    apiHistory: [],
+    entries: []
+  };
+}
+function getActive(){
+  return conversations.find(c => c.id === activeId);
+}
+
+let dragFromId = null;
+let activeCtxMenu = null;
+
+function closeCtxMenu(){
+  if(activeCtxMenu){ activeCtxMenu.remove(); activeCtxMenu = null; }
+}
+
+function openTabContextMenu(x, y, id){
+  closeCtxMenu();
+  const menu = document.createElement('div');
+  menu.className = 'ctx-menu';
+  menu.innerHTML = `
+    <button class="ctx-item" data-action="rename">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      Rename
+    </button>
+    <button class="ctx-item ctx-danger" data-action="close">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      Close tab
+    </button>
+  `;
+  document.body.appendChild(menu);
+
+  // keep menu on-screen
+  const rect = menu.getBoundingClientRect();
+  const left = Math.min(x, window.innerWidth - rect.width - 8);
+  const top = Math.min(y, window.innerHeight - rect.height - 8);
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+
+  menu.querySelector('[data-action="rename"]').onclick = (e) => {
+    e.stopPropagation();
+    closeCtxMenu();
+    startInlineRename(id);
+  };
+  menu.querySelector('[data-action="close"]').onclick = (e) => {
+    e.stopPropagation();
+    closeCtxMenu();
+    closeConversation(id);
+  };
+  activeCtxMenu = menu;
+}
+document.addEventListener('click', (e) => {
+  if(activeCtxMenu && !activeCtxMenu.contains(e.target)) closeCtxMenu();
+});
+document.addEventListener('scroll', closeCtxMenu, true);
+window.addEventListener('resize', closeCtxMenu);
+
+function startInlineRename(id){
+  const tabEl = tabsList.querySelector(`.tab-item[data-id="${id}"]`);
+  const conv = conversations.find(c => c.id === id);
+  if(!tabEl || !conv) return;
+
+  const nameSpan = tabEl.querySelector('.tname');
+  if(!nameSpan) return;
+  tabEl.draggable = false;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'tname-edit';
+  input.value = conv.name;
+  nameSpan.replaceWith(input);
+  input.focus();
+  input.select();
+
+  let done = false;
+  function commit(){
+    if(done) return;
+    done = true;
+    const val = input.value.trim();
+    if(val) conv.name = val;
+    renderTabs();
+    renderManagePanel();
+  }
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ e.preventDefault(); commit(); }
+    if(e.key === 'Escape'){ e.preventDefault(); done = true; renderTabs(); }
+  });
+  input.addEventListener('blur', commit);
+  input.addEventListener('click', (e) => e.stopPropagation());
+  input.addEventListener('mousedown', (e) => e.stopPropagation());
+}
+
+function renderTabs(){
+  tabsList.innerHTML = '';
+  conversations.forEach(c => {
+    const tab = document.createElement('div');
+    tab.className = 'tab-item' + (c.id === activeId ? ' active' : '');
+    tab.draggable = true;
+    tab.dataset.id = c.id;
+    tab.innerHTML = `
+      <span class="tdot"></span>
+      <span class="tname">${escapeHtml(c.name)}</span>
+      <button class="tclose" title="Close chat">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+    `;
+    tab.addEventListener('click', (e) => {
+      if(e.target.closest('.tclose')) return;
+      switchTo(c.id);
+    });
+    tab.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      openTabContextMenu(e.clientX, e.clientY, c.id);
+    });
+    tab.querySelector('.tclose').addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeConversation(c.id);
+    });
+
+    tab.addEventListener('dragstart', (e) => {
+      dragFromId = c.id;
+      tab.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    tab.addEventListener('dragend', () => {
+      tab.classList.remove('dragging');
+      tabsList.querySelectorAll('.tab-item').forEach(t => t.classList.remove('drop-before', 'drop-after'));
+    });
+    tab.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if(dragFromId === c.id) return;
+      const rect = tab.getBoundingClientRect();
+      const before = (e.clientX - rect.left) < rect.width / 2;
+      tab.classList.toggle('drop-before', before);
+      tab.classList.toggle('drop-after', !before);
+    });
+    tab.addEventListener('dragleave', () => {
+      tab.classList.remove('drop-before', 'drop-after');
+    });
+    tab.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tab.classList.remove('drop-before', 'drop-after');
+      if(!dragFromId || dragFromId === c.id) return;
+      const fromIdx = conversations.findIndex(x => x.id === dragFromId);
+      let toIdx = conversations.findIndex(x => x.id === c.id);
+      if(fromIdx === -1 || toIdx === -1) return;
+      const rect = tab.getBoundingClientRect();
+      const before = (e.clientX - rect.left) < rect.width / 2;
+
+      // FLIP: capture positions before the reorder
+      const firstRects = {};
+      tabsList.querySelectorAll('.tab-item').forEach(el => {
+        firstRects[el.dataset.id] = el.getBoundingClientRect();
+      });
+
+      const [moved] = conversations.splice(fromIdx, 1);
+      toIdx = conversations.findIndex(x => x.id === c.id);
+      conversations.splice(before ? toIdx : toIdx + 1, 0, moved);
+      dragFromId = null;
+      renderTabs();
+
+      // animate from old position to new
+      tabsList.querySelectorAll('.tab-item').forEach(el => {
+        const first = firstRects[el.dataset.id];
+        if(!first) return;
+        const last = el.getBoundingClientRect();
+        const dx = first.left - last.left;
+        if(Math.abs(dx) > 0.5){
+          el.style.transition = 'none';
+          el.style.transform = `translateX(${dx}px)`;
+          requestAnimationFrame(() => {
+            el.style.transition = 'transform .22s ease';
+            el.style.transform = '';
+          });
+        }
+      });
+    });
+
+    tabsList.appendChild(tab);
+  });
+}
+
+function renderManagePanel(){
+  managePanel.innerHTML = '';
+  conversations.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'manage-row' + (c.id === activeId ? ' active' : '');
+    row.innerHTML = `
+      <span class="mname">${escapeHtml(c.name)}</span>
+      <span class="mactions">
+        <button class="mren" title="Rename chat">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </button>
+        <button class="mdel" title="Delete chat">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </span>
+    `;
+    row.addEventListener('click', (e) => {
+      if(e.target.closest('.mdel') || e.target.closest('.mren')) return;
+      switchTo(c.id);
+      managePanel.classList.remove('open');
+    });
+    row.querySelector('.mren').addEventListener('click', (e) => {
+      e.stopPropagation();
+      managePanel.classList.remove('open');
+      startInlineRename(c.id);
+    });
+    row.querySelector('.mdel').addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeConversation(c.id);
+    });
+    managePanel.appendChild(row);
+  });
+}
+
+function switchTo(id){
+  activeId = id;
+  renderTabs();
+  renderManagePanel();
+  rebuildFeed();
+}
+
+function rebuildFeed(){
+  const conv = getActive();
+  feed.innerHTML = '';
+  if(!conv || conv.entries.length === 0){
+    feed.appendChild(emptyState);
+    return;
+  }
+  conv.entries.forEach(en => feed.appendChild(buildEntryDom(en)));
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function buildEntryDom(en){
+  const entry = document.createElement('div');
+  entry.className = 'entry';
+  const aClass = 'a' + (en.loading ? ' loading' : '') + (en.error ? ' err' : '');
+  entry.innerHTML = `
+    <div class="q"><span class="tag">Q</span><span>${escapeHtml(en.q)}</span></div>
+    <div class="${aClass}">${escapeHtml(en.answer)}</div>
+    ${en.via ? `<div class="via">${escapeHtml(en.via)}</div>` : ''}
+  `;
+  return entry;
+}
+
+function newConversation(){
+  const conv = makeConversation('Chat ' + (conversations.length + 1));
+  conversations.push(conv);
+  switchTo(conv.id);
+}
+
+function closeConversation(id){
+  const idx = conversations.findIndex(c => c.id === id);
+  if(idx === -1) return;
+  conversations.splice(idx, 1);
+  if(conversations.length === 0){
+    newConversation();
+    return;
+  }
+  if(activeId === id){
+    switchTo(conversations[Math.max(0, idx - 1)].id);
+  }else{
+    renderTabs();
+    renderManagePanel();
+  }
+}
+
+manageBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  renderManagePanel();
+  managePanel.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if(!managePanel.contains(e.target) && e.target !== manageBtn){
+    managePanel.classList.remove('open');
+  }
+});
+tabAddBtn.onclick = newConversation;
+
+/* init first chat */
+conversations = [makeConversation('Chat 1')];
+activeId = conversations[0].id;
+renderTabs();
+
+/* ---------- top pill / status ---------- */
+function refreshTopUI(){
+  const id = getSelectedProvider();
+  const data = loadProviderData(id);
+  const has = !!data.key;
+  statusKey.textContent = has ? ('AI: ' + PROVIDERS[id].label + ' · ' + data.model) : 'AI: Not connected';
+  readyLabel.textContent = has ? (PROVIDERS[id].label + ' Ready') : 'Not Ready';
+  readyDot.style.background = has ? 'var(--green)' : 'var(--red)';
+}
+
+/* ---------- modal ---------- */
+function renderProviderGrid(){
+  providerGrid.innerHTML = '';
+  Object.keys(PROVIDERS).forEach(id => {
+    const p = PROVIDERS[id];
+    const data = loadProviderData(id);
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'provider-chip' + (id === modalSelected ? ' selected' : '');
+    chip.innerHTML = `
+      <span class="sw ${data.key ? 'on' : ''}"></span>
+      <span>
+        <div class="pname">${p.label}</div>
+        <div class="pmodel">${data.model}</div>
+      </span>
+    `;
+    chip.onclick = () => {
+      modalSelected = id;
+      populateFields();
+      renderProviderGrid();
+    };
+    providerGrid.appendChild(chip);
+  });
+}
+function populateModelOptions(providerId, preferredModel){
+  const p = PROVIDERS[providerId];
+  const data = loadProviderData(providerId);
+  const wanted = preferredModel || data.model || p.defaultModel;
+
+  modelInput.innerHTML = '';
+  p.models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    modelInput.appendChild(opt);
+  });
+  // if a previously saved custom model isn't in the list, add it so it isn't lost
+  if(wanted && !p.models.includes(wanted)){
+    const opt = document.createElement('option');
+    opt.value = wanted;
+    opt.textContent = wanted;
+    modelInput.appendChild(opt);
+  }
+  modelInput.value = wanted;
+}
+
+function populateFields(){
+  const p = PROVIDERS[modalSelected];
+  const data = loadProviderData(modalSelected);
+  apiKeyInput.value = data.key || '';
+  apiKeyInput.placeholder = p.keyPlaceholder;
+  populateModelOptions(modalSelected);
+  signupLink.href = p.signupUrl;
+}
+
+/* auto-detect the provider from the shape of a pasted key, so the person
+   doesn't have to know or pick which provider it belongs to */
+function detectProviderFromKey(key){
+  if(!key) return null;
+  if(key.startsWith('sk-ant-')) return 'anthropic';
+  if(key.startsWith('gsk_')) return 'groq';
+  if(key.startsWith('AIza')) return 'google';
+  if(key.startsWith('sk-')) return 'openai';
+  return null;
+}
+apiKeyInput.addEventListener('input', () => {
+  const detected = detectProviderFromKey(apiKeyInput.value.trim());
+  if(detected && detected !== modalSelected){
+    modalSelected = detected;
+    renderProviderGrid();
+    populateModelOptions(modalSelected);
+    signupLink.href = PROVIDERS[modalSelected].signupUrl;
+    apiKeyInput.placeholder = PROVIDERS[modalSelected].keyPlaceholder;
+  }
+});
+/* ---------- general settings ---------- */
+function loadGeneralSettings(){
+  const defaults = { temperature: 0.5, systemPrompt: '', maxTokens: 1024, historyLimit: 20 };
+  try{
+    const raw = localStorage.getItem('general_settings');
+    return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+  }catch(e){
+    return defaults;
+  }
+}
+function saveGeneralSettings(s){
+  localStorage.setItem('general_settings', JSON.stringify(s));
+}
+tempInput.addEventListener('input', () => { tempValue.textContent = tempInput.value; });
+maxTokensInput.addEventListener('input', () => { maxTokensValue.textContent = maxTokensInput.value; });
+historyLimitInput.addEventListener('input', () => { historyLimitValue.textContent = historyLimitInput.value; });
+
+/* ---------- settings tabs ---------- */
+function showSettingsSection(name){
+  settingsTabs.forEach(b => b.classList.toggle('active', b.dataset.section === name));
+  Object.keys(settingsSections).forEach(k => { settingsSections[k].hidden = (k !== name); });
+}
+settingsTabs.forEach(btn => {
+  btn.addEventListener('click', () => showSettingsSection(btn.dataset.section));
+});
+
+/* ---------- AI provider modal ---------- */
+function openAiModal(){
+  modalSelected = getSelectedProvider();
+  renderProviderGrid();
+  populateFields();
+  aiModalBackdrop.classList.add('open');
+}
+aiBtn.onclick = openAiModal;
+document.getElementById('aiCancel').onclick = () => aiModalBackdrop.classList.remove('open');
+document.getElementById('aiSave').onclick = () => {
+  const data = {
+    key: apiKeyInput.value.trim(),
+    model: modelInput.value.trim() || PROVIDERS[modalSelected].defaultModel
+  };
+  saveProviderData(modalSelected, data);
+  setSelectedProvider(modalSelected);
+  aiModalBackdrop.classList.remove('open');
+  refreshTopUI();
+};
+aiModalBackdrop.addEventListener('click', (e) => { if(e.target === aiModalBackdrop) aiModalBackdrop.classList.remove('open'); });
+
+/* ---------- settings modal ---------- */
+function openSettingsModal(){
+  showSettingsSection('behavior');
+
+  const gs = loadGeneralSettings();
+  tempInput.value = gs.temperature;
+  tempValue.textContent = gs.temperature;
+  maxTokensInput.value = gs.maxTokens;
+  maxTokensValue.textContent = gs.maxTokens;
+  historyLimitInput.value = gs.historyLimit;
+  historyLimitValue.textContent = gs.historyLimit;
+  systemPromptInput.value = gs.systemPrompt;
+
+  updateThemeChipsUI(localStorage.getItem('theme') || 'dark');
+  updateFontChipsUI(localStorage.getItem('font_size') || 'md');
+
+  settingsModalBackdrop.classList.add('open');
+}
+settingsBtn.onclick = openSettingsModal;
+document.getElementById('settingsCancel').onclick = () => settingsModalBackdrop.classList.remove('open');
+document.getElementById('settingsSave').onclick = () => {
+  saveGeneralSettings({
+    temperature: parseFloat(tempInput.value),
+    maxTokens: parseInt(maxTokensInput.value, 10),
+    historyLimit: parseInt(historyLimitInput.value, 10),
+    systemPrompt: systemPromptInput.value.trim()
+  });
+  settingsModalBackdrop.classList.remove('open');
+};
+resetAllBtn.onclick = () => {
+  if(!confirm('This clears every saved key, model, chat, and setting on this device. Continue?')) return;
+  localStorage.clear();
+  location.reload();
+};
+clearAllBtn.onclick = () => {
+  if(!confirm('This empties every chat tab\'s messages. Tabs, keys, and settings are kept. Continue?')) return;
+  conversations.forEach(c => { c.entries = []; c.apiHistory = []; });
+  rebuildFeed();
+  settingsModalBackdrop.classList.remove('open');
+};
+exportBtn.onclick = () => {
+  const payload = conversations.map(c => ({ name: c.name, entries: c.entries }));
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'highlightai-chats.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+settingsModalBackdrop.addEventListener('click', (e) => { if(e.target === settingsModalBackdrop) settingsModalBackdrop.classList.remove('open'); });
+refreshTopUI();
+
+/* ---------- theme + text size ---------- */
+function updateThemeChipsUI(theme){
+  themeRow.querySelectorAll('.opt-chip').forEach(b => b.classList.toggle('selected', b.dataset.theme === theme));
+}
+function applyTheme(theme){
+  document.body.classList.toggle('light', theme === 'light');
+  sunIcon.style.display = theme === 'light' ? 'block' : 'none';
+  moonIcon.style.display = theme === 'light' ? 'none' : 'block';
+  localStorage.setItem('theme', theme);
+  updateThemeChipsUI(theme);
+}
+themeBtn.onclick = () => {
+  const current = localStorage.getItem('theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+};
+themeRow.querySelectorAll('.opt-chip').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
+applyTheme(localStorage.getItem('theme') || 'dark');
+
+function updateFontChipsUI(size){
+  fontSizeRow.querySelectorAll('.opt-chip').forEach(b => b.classList.toggle('selected', b.dataset.size === size));
+}
+function applyFontSize(size){
+  document.body.classList.remove('font-sm', 'font-md', 'font-lg');
+  document.body.classList.add('font-' + size);
+  localStorage.setItem('font_size', size);
+  updateFontChipsUI(size);
+}
+fontSizeRow.querySelectorAll('.opt-chip').forEach(btn => {
+  btn.addEventListener('click', () => applyFontSize(btn.dataset.size));
+});
+applyFontSize(localStorage.getItem('font_size') || 'md');
+
+/* ---------- highlight answer text into the question box ---------- */
+const selectPopover = document.getElementById('selectPopover');
+const selectAddBtn = document.getElementById('selectAddBtn');
+let pendingSelectionText = '';
+
+document.addEventListener('mouseup', (e) => {
+  if(e.target.closest('#selectPopover')) return;
+
+  setTimeout(() => {
+    const sel = window.getSelection();
+    const text = sel.toString().trim();
+    if(!text || sel.isCollapsed || !feed.contains(sel.anchorNode)){
+      selectPopover.classList.remove('show');
+      return;
+    }
+    pendingSelectionText = text;
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    selectPopover.style.left = (rect.left + rect.width / 2) + 'px';
+    selectPopover.style.top = (rect.top - 10) + 'px';
+    selectPopover.classList.add('show');
+  }, 0);
+});
+
+document.addEventListener('mousedown', (e) => {
+  if(e.target.closest('#selectPopover')) return;
+  selectPopover.classList.remove('show');
+});
+document.addEventListener('scroll', () => selectPopover.classList.remove('show'), true);
+
+selectAddBtn.addEventListener('click', () => {
+  if(!pendingSelectionText) return;
+  const quoted = '"' + pendingSelectionText + '"\n\n';
+  questionEl.value = questionEl.value
+    ? questionEl.value.replace(/\s*$/, '\n\n') + quoted
+    : quoted;
+  selectPopover.classList.remove('show');
+  window.getSelection().removeAllRanges();
+  questionEl.focus();
+  questionEl.setSelectionRange(questionEl.value.length, questionEl.value.length);
+  questionEl.scrollTop = questionEl.scrollHeight;
+});
+
+/* ---------- ask flow ---------- */
+questionEl.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    send();
+  }
+});
+askBtn.onclick = send;
+
+async function send(){
+  const q = questionEl.value.trim();
+  if(!q) return;
+
+  const providerId = getSelectedProvider();
+  const providerData = loadProviderData(providerId);
+  if(!providerData.key){
+    openAiModal();
+    return;
+  }
+
+  const conv = getActive();
+  if(!conv) return;
+
+  if(emptyState.parentNode) emptyState.remove();
+  questionEl.value = '';
+  askBtn.disabled = true;
+
+  const entryObj = { q, answer: 'thinking…', loading: true, error: false, via: '' };
+  conv.entries.push(entryObj);
+
+  const entry = document.createElement('div');
+  entry.className = 'entry';
+  entry.innerHTML = `
+    <div class="q"><span class="tag">Q</span><span>${escapeHtml(q)}</span></div>
+    <div class="a loading">thinking…</div>
+  `;
+  feed.appendChild(entry);
+  feed.scrollTop = feed.scrollHeight;
+
+  conv.apiHistory.push({role:'user', content:q});
+
+  try{
+    const gs = loadGeneralSettings();
+    const limit = gs.historyLimit > 0 ? gs.historyLimit : conv.apiHistory.length;
+    const contextMessages = conv.apiHistory.slice(-limit);
+    const answer = await askAI(providerId, providerData, contextMessages);
+    conv.apiHistory.push({role:'assistant', content:answer});
+    entryObj.answer = answer;
+    entryObj.loading = false;
+    entryObj.via = 'via ' + PROVIDERS[providerId].label + ' · ' + providerData.model;
+
+    const a = entry.querySelector('.a');
+    a.classList.remove('loading');
+    a.textContent = answer;
+    const via = document.createElement('div');
+    via.className = 'via';
+    via.textContent = entryObj.via;
+    entry.appendChild(via);
+  }catch(err){
+    entryObj.answer = 'Could not get an answer: ' + err.message;
+    entryObj.loading = false;
+    entryObj.error = true;
+
+    const a = entry.querySelector('.a');
+    a.classList.remove('loading');
+    a.classList.add('err');
+    a.textContent = entryObj.answer;
+  }finally{
+    askBtn.disabled = false;
+    feed.scrollTop = feed.scrollHeight;
+  }
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ---------- provider API calls ---------- */
+const DEFAULT_SYSTEM_PROMPT = 'You are a helpful, direct assistant. Keep answers clear and no longer than necessary.';
+
+async function askAI(providerId, providerData, messages){
+  const gs = loadGeneralSettings();
+  const systemPrompt = gs.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+  const temperature = typeof gs.temperature === 'number' ? gs.temperature : 0.5;
+  const maxTokens = gs.maxTokens || 1024;
+  switch(providerId){
+    case 'groq': return askOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', providerData, messages, systemPrompt, temperature, maxTokens);
+    case 'openai': return askOpenAICompatible('https://api.openai.com/v1/chat/completions', providerData, messages, systemPrompt, temperature, maxTokens);
+    case 'anthropic': return askAnthropic(providerData, messages, systemPrompt, temperature, maxTokens);
+    case 'google': return askGoogle(providerData, messages, systemPrompt, temperature, maxTokens);
+    default: throw new Error('Unknown provider');
+  }
+}
+
+async function askOpenAICompatible(url, providerData, messages, systemPrompt, temperature, maxTokens){
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + providerData.key
+    },
+    body: JSON.stringify({
+      model: providerData.model,
+      temperature: temperature,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ]
+    })
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> '');
+    throw new Error('API error (' + res.status + '). Check your key. ' + t.slice(0,140));
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() || 'No answer returned.';
+}
+
+async function askAnthropic(providerData, messages, systemPrompt, temperature, maxTokens){
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': providerData.key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: providerData.model,
+      max_tokens: maxTokens,
+      temperature: temperature,
+      system: systemPrompt,
+      messages: messages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+    })
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> '');
+    throw new Error('API error (' + res.status + '). Check your key. ' + t.slice(0,140));
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text?.trim() || 'No answer returned.';
+}
+
+async function askGoogle(providerData, messages, systemPrompt, temperature, maxTokens){
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(providerData.model)}:generateContent?key=${encodeURIComponent(providerData.key)}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: messages.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      })),
+      generationConfig: { temperature: temperature, maxOutputTokens: maxTokens },
+      systemInstruction: {
+        parts: [{ text: systemPrompt }]
+      }
+    })
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> '');
+    throw new Error('API error (' + res.status + '). Check your key. ' + t.slice(0,140));
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'No answer returned.';
+}
+</script>
+
+</body>
+</html>
