@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HighlightAI</title>
+<title>HighlightAI — question left, answer right</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CjxyZWN0IHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgcng9IjUiIGZpbGw9IiM3ZGQzZmMiLz4KPHBhdGggZD0iTTkgNiAzIDEybDYgNiIgc3Ryb2tlPSIjMGEwYTBiIiBzdHJva2Utd2lkdGg9IjIuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0xNSA2bDYgNi02IDYiIHN0cm9rZT0iIzBhMGEwYiIgc3Ryb2tlLXdpZHRoPSIyLjYiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -445,6 +445,17 @@
   .entry .a.err{ border-left-color:var(--red); color:#f2a3b3; }
   .entry .a.reveal{ animation:textFade .4s ease; }
   @keyframes textFade{ from{opacity:0;} to{opacity:1;} }
+  .entry .a strong{ color:#fff; font-weight:700; }
+  .entry .a code{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.92em;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:1px 5px;
+  }
+  body.light .entry .a strong{ color:#111; }
+  body.light .entry .a code{ background:#eee; }
   .entry .via{
     margin-top:8px;
     font-family:'JetBrains Mono', monospace;
@@ -1276,7 +1287,7 @@ function buildEntryDom(en){
   const aClass = 'a' + (en.loading ? ' loading' : '') + (en.error ? ' err' : '');
   entry.innerHTML = `
     <div class="q"><span class="tag">Q</span><span>${escapeHtml(en.q)}</span></div>
-    <div class="${aClass}">${escapeHtml(en.answer)}</div>
+    <div class="${aClass}">${en.loading ? escapeHtml(en.answer) : renderMarkdownLite(en.answer)}</div>
     ${en.via ? `<div class="via">${escapeHtml(en.via)}</div>` : ''}
   `;
   return entry;
@@ -1639,7 +1650,7 @@ async function send(){
 
     const a = entry.querySelector('.a');
     a.classList.remove('loading');
-    a.textContent = answer;
+    a.innerHTML = renderMarkdownLite(answer);
     a.classList.add('reveal');
     const via = document.createElement('div');
     via.className = 'via';
@@ -1662,6 +1673,16 @@ async function send(){
 
 function escapeHtml(s){
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* Renders a small, safe subset of markdown from AI answers: **bold** and
+   `inline code`. Escapes HTML first so nothing from the model can inject
+   markup — only our own <strong>/<code> tags get added back in. */
+function renderMarkdownLite(text){
+  let s = escapeHtml(text);
+  s = s.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/`([^`]+?)`/g, '<code>$1</code>');
+  return s;
 }
 
 /* ---------- provider API calls ---------- */
