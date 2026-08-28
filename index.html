@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HighlightAI — question left, answer right</title>
+<title>HighlightAI</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CjxyZWN0IHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgcng9IjUiIGZpbGw9IiM3ZGQzZmMiLz4KPHBhdGggZD0iTTkgNiAzIDEybDYgNiIgc3Ryb2tlPSIjMGEwYTBiIiBzdHJva2Utd2lkdGg9IjIuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0xNSA2bDYgNi02IDYiIHN0cm9rZT0iIzBhMGEwYiIgc3Ryb2tlLXdpZHRoPSIyLjYiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -385,8 +385,18 @@
   #feed{
     flex:1;
     overflow-y:auto;
+    overflow-x:hidden;
     padding:18px 20px 30px;
+    scrollbar-width:thin;
+    scrollbar-color:#3a3b3d transparent;
   }
+  #feed::-webkit-scrollbar{ width:8px; }
+  #feed::-webkit-scrollbar-track{ background:transparent; }
+  #feed::-webkit-scrollbar-thumb{ background:#3a3b3d; border-radius:8px; }
+  #feed::-webkit-scrollbar-thumb:hover{ background:#4c4d4f; }
+  body.light #feed{ scrollbar-color:#c9c9ca transparent; }
+  body.light #feed::-webkit-scrollbar-thumb{ background:#c9c9ca; }
+  body.light #feed::-webkit-scrollbar-thumb:hover{ background:#adadae; }
   .empty{
     border:1px dashed #262729;
     border-radius:10px;
@@ -422,11 +432,10 @@
     letter-spacing:.4px;
   }
   .entry .a{
-    background:transparent;
-    border:1px solid var(--border);
+    background:none;
+    border:none;
     border-left:2px solid var(--accent-blue);
-    border-radius:0 9px 9px 9px;
-    padding:14px 16px;
+    padding:2px 0 2px 16px;
     font-size:var(--a-font-size, 14.5px);
     line-height:1.65;
     color:var(--text);
@@ -434,6 +443,8 @@
   }
   .entry .a.loading{ color:var(--muted); font-style:italic; }
   .entry .a.err{ border-left-color:var(--red); color:#f2a3b3; }
+  .entry .a.reveal{ animation:textFade .4s ease; }
+  @keyframes textFade{ from{opacity:0;} to{opacity:1;} }
   .entry .via{
     margin-top:8px;
     font-family:'JetBrains Mono', monospace;
@@ -1629,6 +1640,7 @@ async function send(){
     const a = entry.querySelector('.a');
     a.classList.remove('loading');
     a.textContent = answer;
+    a.classList.add('reveal');
     const via = document.createElement('div');
     via.className = 'via';
     via.textContent = entryObj.via;
@@ -1640,7 +1652,7 @@ async function send(){
 
     const a = entry.querySelector('.a');
     a.classList.remove('loading');
-    a.classList.add('err');
+    a.classList.add('err', 'reveal');
     a.textContent = entryObj.answer;
   }finally{
     askBtn.disabled = false;
