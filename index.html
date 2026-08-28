@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HighlightAI — question left, answer right</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CjxyZWN0IHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgcng9IjUiIGZpbGw9IiM3ZGQzZmMiLz4KPHBhdGggZD0iTTkgNiAzIDEybDYgNiIgc3Ryb2tlPSIjMGEwYTBiIiBzdHJva2Utd2lkdGg9IjIuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0xNSA2bDYgNi02IDYiIHN0cm9rZT0iIzBhMGEwYiIgc3Ryb2tlLXdpZHRoPSIyLjYiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -17,6 +18,7 @@
     --muted:#75787a;
     --green:#3ecf8e;
     --green-dim:#132a20;
+    --accent-blue:#7dd3fc;
     --purple:#8a7cff;
     --red:#ef4770;
     --amber:#e8a33d;
@@ -44,7 +46,6 @@
   body.light .provider-chip.selected{ border-color:#9a9c9e; background:#e9e9ea; }
   body.light .modal, body.light .modal input, body.light .modal select{ background:#fff; }
   body.light .modal input, body.light .modal select, body.light .modal textarea{ background:#f6f6f7; }
-  body.light .entry .a{ background:#fff; }
   body.light .icon-btn:hover{ border-color:#b9babc; }
   body.light .settings-tabs{ background:#f0f0f1; }
   body.light .settings-tab.active{ background:#fff; color:#111; }
@@ -90,7 +91,7 @@
   .logo .mark{
     width:22px;height:22px;
     border-radius:5px;
-    background:#7dd3fc;
+    background:var(--accent-blue);
     color:#0a0a0b;
     display:flex;align-items:center;justify-content:center;
     flex:none;
@@ -397,9 +398,9 @@
   }
   .entry{
     margin-bottom:22px;
-    animation:in .2s ease;
+    animation:in .5s cubic-bezier(.22,.68,0,1);
   }
-  @keyframes in{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes in{ from{opacity:0; transform:translateY(-8px);} to{opacity:1; transform:translateY(0);} }
   .entry .q{
     display:flex;
     gap:9px;
@@ -421,9 +422,9 @@
     letter-spacing:.4px;
   }
   .entry .a{
-    background:var(--panel-alt);
+    background:transparent;
     border:1px solid var(--border);
-    border-left:2px solid var(--green);
+    border-left:2px solid var(--accent-blue);
     border-radius:0 9px 9px 9px;
     padding:14px 16px;
     font-size:var(--a-font-size, 14.5px);
